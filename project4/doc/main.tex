@@ -1,0 +1,336 @@
+\documentclass[conference]{styles/acmsiggraph}
+
+\usepackage{comment} % enables the use of multi-line comments (\ifx \fi)
+\usepackage{lipsum} %This package just generates Lorem Ipsum filler text.
+\usepackage{fullpage} % changes the margin
+\usepackage{enumitem} % for customizing enumerate tags
+\usepackage{amsmath,amsthm,amssymb}
+\usepackage{listings}
+\usepackage{graphicx}
+\usepackage{etoolbox}   % for booleans and much more
+\usepackage{verbatim}   % for the comment environment
+\usepackage[dvipsnames]{xcolor}
+\usepackage{fancyvrb}
+\usepackage{hyperref}
+\usepackage{menukeys}
+\usepackage{titlesec}
+\usepackage{float}
+
+\usepackage{graphicx}
+\usepackage{subfig}
+\setlength{\parskip}{.8mm}
+
+\title{\huge Homework 4: \\ \LARGE {Introduction to Image and Video Processing}}
+\author{\Large Huang Yiping \\}
+\pdfauthor{Huang Yiping}
+
+
+\hypersetup{
+	colorlinks=true,
+	linkcolor=magenta,
+	filecolor=magenta,
+	urlcolor=blue,
+}
+% redefine \VerbatimInput
+\RecustomVerbatimCommand{\VerbatimInput}{VerbatimInput}%
+{fontsize=\footnotesize,
+ %
+ frame=lines,  % top and bottom rule only
+ framesep=2em, % separation between frame and text
+ rulecolor=\color{Gray},
+ %
+ label=\fbox{\color{Black}\textbf{OUTPUT}},
+ labelposition=topline,
+ %
+ commandchars=\|\(\), % escape character and argument delimiters for
+                      % commands within the verbatim
+ commentchar=*        % comment character
+}
+
+% convenient norm symbol
+\newcommand{\norm}[1]{\left\lVert#1\right\rVert}
+\renewcommand{\vec}[1]{\mathbf{#1}}
+
+\titlespacing*{\section}{0pt}{5.5ex plus 1ex minus .2ex}{2ex}
+\titlespacing*{\subsection}{0pt}{3ex}{2ex}
+
+\setcounter{secnumdepth}{4}	
+\renewcommand\theparagraph{\thesubsubsection.\arabic{paragraph}}	
+\newcommand\subsubsubsection{\paragraph}
+
+\setlength{\parskip}{0.5em}
+
+% a macro for hiding answers
+\newbool{hideanswers}
+\setbool{hideanswers}{false}
+\newenvironment{answer}{}{}
+\ifbool{hideanswers}{\AtBeginEnvironment{answer}{\comment} %
+\AtEndEnvironment{answer}{\endcomment}}{}
+
+\newcommand{\points}[1]{\hfill \normalfont{(\textit{#1pts})}}
+\newcommand{\pointsin}[1]{\normalfont{(\textit{#1pts})}}
+
+\begin{document}
+\maketitle
+
+
+\section{Motion Energy Images}
+
+\subsection{Finding the MEIs in the activities videos you chose (Matlab or Python). Make sure you choose w
+to be a reasonable temporal window (there is no one correct value for w). Display the resulting
+MEIs for two subsequences of w frames. Use what you consider are reasonable values of w, and
+explain why you chose them.}
+% \subsubsection{Using inter-frame differences D(x, y, t) = I(x, y, t) - I(x, y, t - 1), for frame intensity equal
+% to I(x, y, t) at pixel (x, y) and frame t.}
+
+\begin{answer}
+	\rule{\textwidth}{0.4pt}
+	
+	\textbf{Answer:}
+
+	Motion Energy Images(MEI) is defined as $E_\tau (x,y,t) = \cup_{i=0}^{\tau-1} D(x,y,t-i)$, where $\tau$ is the window size, and $D(x,y,t)$ is a binary image indicating whether there is motion under the $(x,y)$ point in the time $t$. To determine this value, I use the magnitude of the interframe difference, i.e., if |$I(x,y,t) - I(x,y,t-1)| > \epsilon$, then I set $D(x,y,t)$ to $1$. The $I(x,y,t)$ is the intensity at $(x,y)$ in the $t$ point of time, and the $\epsilon$ is a small value to remove the background noise due to the sensors of the camera, the value of pixels are transformed to double and I set the default value of $\epsilon$ to be $0.05$. All figures below are produced with this value if without further explaination.
+
+	A window of size $5$ is chosen initially, and the sequence images are shown below for the jump, bend and skip action from the Weizmann actions dataset. 
+
+	The window size of $5$ is chosen somewhat subjectively. However, since the jump action is repeated $3$ times in the video, and in total there are $38$ frames in the video, so in average, one jump action takes about $38/3 = 12$ frames to complete. With $5$ sequence in display and with each frame captures the previous $5$ frames of movement, we can expect the displayed MEI sequences are relatively complete in describing the motion.
+
+	\begin{figure}[H]
+		\centering
+		\subfloat{\includegraphics[width = \textwidth]{images/shahar_jump_w5.jpg} \label{fig:test}}\\
+		\subfloat{\includegraphics[width = \textwidth]{images/shahar_jump_w5_gray.jpg}}
+		\caption{MEI sequence of shahar jump using window of size 5 and the corresponding frames starting from the $20$th frame}
+			
+	\end{figure}
+
+	The bending sequence is plotted similarly as shown below. We observe that for bending action, $5$ sequences of MEI with a window size of $5$ are not enough to describe the action completely. 
+	\begin{figure}[H]
+		\centering
+		\subfloat{\includegraphics[scale = 0.3]{images/shahar_bend_w5.jpg}}\\
+		\subfloat{\includegraphics[scale = 0.3]{images/shahar_bend_w5_gray.jpg}}
+		\caption{MEI sequence of shahar bend using window of size 5 and the corresponding frames}
+	\end{figure}
+
+	Finally, the skipping sequence is shown as well. We see that a sequence of $5$ frames with a window size of $5$ is enough to describe the skip action.
+
+	\begin{figure}[H]
+		\centering
+		\subfloat{\includegraphics[scale = 0.3]{images/shahar_skip_w5.jpg}}\\
+		\subfloat{\includegraphics[scale = 0.3]{images/shahar_skip_w5_gray.jpg}}\\
+		\caption{MEI sequence of shahar skip using window of size 5 and the coresponding frames}
+	\end{figure}
+
+	Seeing that the bending action is not complete, a window size of $10$ is used and a plot of $10$ sequences are shown for each of the action similarly as above figures.
+
+	From the blobs, we see that the difference in MEI sequence between the frames is further reduced due to the bigger size of the window. The bending action is now much more complete than in the previous figure, although still not fully. However in calculating the action moment, the whole series of video are taken into consideration, so it is ok that the sequences shown here are not fully complete.
+	
+	\begin{figure}[H]
+		\centering
+		\subfloat{\includegraphics[scale = 0.3]{images/shahar_jump_w10.jpg}}\\
+		\subfloat{\includegraphics[scale = 0.3]{images/shahar_jump_w10_gray.jpg}}
+		
+		\caption{MEI sequence of shahar jump using window of size 10 and the corresponding frames}
+	\end{figure}
+
+	\begin{figure}[H]
+		\centering
+		\subfloat{\includegraphics[scale = 0.3]{images/shahar_bend_w10.jpg}}\\
+		\subfloat{\includegraphics[scale = 0.3]{images/shahar_bend_w10_gray.jpg}}
+		\caption{MEI sequence of shahar bend using window of size 10 starting from the 15th frame and its corresponding frames}
+	\end{figure}
+	\begin{figure}[H]
+		\centering
+		\subfloat{\includegraphics[scale = 0.3]{images/shahar_skip_w10.jpg}}\\
+		\subfloat{\includegraphics[scale = 0.3]{images/shahar_skip_w10_gray.jpg}}
+		
+		\caption{MEI sequence of shahar skip using window of size 10 and its corresponding frames}
+	\end{figure}
+
+	\rule{\textwidth}{0.4pt}
+
+	\end{answer}
+
+
+	% \subsubsection{Using optical flow estimates, e.g. Lukas-Kanade, Farneback or other existing code for
+	% motion estimation. You do not need to write this code from scratch, or explain it (as it’s
+	% not the focus of this project), just use it as a tool to extract the motion magnitude}
+
+	% \begin{answer}
+	% 	\rule{\textwidth}{0.4pt}
+	% 	\textbf{Answer:}
+	% 	These results are shown below.
+	% 	\begin{figure}[H]
+	% 		\centering
+	% 		\includegraphics[scale = 0.3]{images/shahar_jump_w5_lk.jpg}
+	% 		\caption{Sequence of shahar jump using window of size 5 using Lukas-Kanade method}
+	% 	\end{figure}
+	% 	\begin{figure}[H]
+	% 		\centering
+	% 		\includegraphics[scale = 0.3]{images/shahar_bend_w5_lk.jpg}
+	% 		\caption{Sequence of shahar bend using window of size 5 using Lukas-Kanade method}
+	% 	\end{figure}
+	% 	\begin{figure}[H]
+	% 		\centering
+	% 		\includegraphics[scale = 0.3]{images/shahar_skip_w5_lk.jpg}
+	% 		\caption{Sequence of shahar skip using window of size 5 using Lukas-Kanade method}
+	% 	\end{figure}
+	
+	% 	\begin{figure}[H]
+	% 		\centering
+	% 		\includegraphics[scale = 0.3]{images/shahar_jump_w10_lk.jpg}
+	% 		\caption{Sequence of shahar jump using window of size 10 using Lukas-Kanade method}
+	% 	\end{figure}
+	% 	\begin{figure}[H]
+	% 		\centering
+	% 		\includegraphics[scale = 0.3]{images/shahar_bend_w10_lk.jpg}
+	% 		\caption{Sequence of shahar bend using window of size 10 using Lukas-Kanade method}
+	% 	\end{figure}
+	
+	% 	\begin{figure}[H]
+	% 		\centering
+	% 		\includegraphics[scale = 0.3]{images/shahar_skip_w10_lk.jpg}
+	% 		\caption{Sequence of shahar skip using window of size 10 using Lukas-Kanade method}
+	% 	\end{figure}
+	
+	% 	\rule{\textwidth}{0.4pt}
+	
+	% 	\end{answer}
+	%%%%%%%%%
+	% bonus %
+	%%%%%%%%%
+	\subsection{Bonus}
+	\subsubsection{Add noise to the image frames}
+	\begin{answer}
+		\rule{\textwidth}{0.4pt}
+		\textbf{Answer:}
+
+		For demonstration purpose, Shahar jump video is chosen an example to add noise on. A Gaussian noise with variance 0.1 is added to each frame of the video using $imnoise$ function.
+
+
+		\rule{\textwidth}{0.4pt}
+	\end{answer}
+
+	\subsubsection{Then find MEI (using the magnitude of inter-frame differences or optical flow)}
+	\begin{answer}
+
+		\rule{\textwidth}{0.4pt}
+		\textbf{Answer:}
+
+		 For convenience sake, figure \ref{fig:test} is shown once again for comparison with the noise sequence. The same method of measuring magnitude of inter-frame differences is used to calculated the noise sequence. Clearly, due to the randomness of noise, much of the background has also been taken as the moving object and thus the object in moving is hard to tell from the background.
+
+		\begin{figure}[H]
+			\centering
+			\includegraphics[scale = 0.3]{images/shahar_jump_w5.jpg}
+			\caption{Sequence of shahar jump using window of size 5}
+		\end{figure}
+		\begin{figure}[H]
+			\centering
+			\includegraphics[scale = 0.3]{images/shahar_jump_w5_noise.jpg}
+			\caption{Sequence of shahar jump using window of size 5 with added gaussian noise}
+		\end{figure}
+
+		\rule{\textwidth}{0.4pt}
+
+	\end{answer}
+	
+	\subsubsection{Apply de-noising (you decide what kind) and find the MEI again. Display, and discuss/compare the results before and after de-noising}
+\begin{answer}
+
+		\rule{\textwidth}{0.4pt}
+		\textbf{Answer:}
+
+		To remove the noise, a Gaussian average filter with size $5\times5$ and $\sigma$ of $10$ is used to filter the video, and a bigger threshold value of $0.14$ is used to compute the MEI. The result sequence is shown below. As can be seen, much of the background noise has been removed, but the leg movement is harder to see. This is because the background runs through the legs and the size of leg is relatively small for the filter compared to the torso so these movements are not salient anymore when energy is later counted.
+		\begin{figure}[H]
+			\centering
+			\includegraphics[scale = 0.3]{images/shahar_jump_w5_denoise.jpg}
+			\caption{denoised sequence of shahar jump using window of size 5}
+		\end{figure}
+
+		\rule{\textwidth}{0.4pt}
+
+\end{answer}
+	
+\subsection{Clean up the MEIs (binary images) with one or more morphological operations. Explain why you
+choose these operations. Display and discuss the results}
+\begin{answer}
+
+	\rule{\textwidth}{0.4pt}
+	\textbf{Answer:}
+	
+	The close process is applied to the MEI. The result applied with the structure element of a disk of radius $3$ is shown below. The process is chosen since close operation is dilation followed by erosion. Thus it can fill the remaining gaps in the object and also smooth the contour of the object, which helps with image segmentation.
+
+	\begin{figure}[H]
+		\centering
+		\includegraphics[scale = 0.3]{images/shahar_jump_w5_close.jpg}
+		\caption{application of close operation in the MEI sequence of shahar jump using window of size 5 }
+	\end{figure}
+
+	\rule{\textwidth}{0.4pt}
+
+\end{answer}
+
+\subsection{Find the outline of the MEI using a method of your liking, such as edge detection, morphological
+boundary extraction. Display it}
+
+\begin{answer}
+
+	\rule{\textwidth}{0.4pt}
+	\textbf{Answer:}
+
+	The erosion operation is chosen to find the outline of  MEI. The erosion is applied with a disk shape element with radius of $3$. This outline is produced by the difference of the original image and the eroded image. 
+	
+\begin{figure}[H]
+	\centering
+	\includegraphics[scale = 0.3]{images/shahar_jump_w5_outline.jpg}
+	\caption{outline by method of erosion of MEI sequence of shahar jump}
+\end{figure}
+
+\rule{\textwidth}{0.4pt}
+
+\end{answer}
+
+\subsection{Extract the shape descriptor for the MEI outlines of the actions using Hu or Zernike moments,
+using ready-made functions}
+\begin{answer}
+	\rule{\textwidth}{0.4pt}
+	\textbf{Answer:}
+
+	Hu's moments are formed by a vector of 7 components, where each one is formed by the combinations of central moments up to order $3$. They have good properties, namely that they are translation, rotation and scale invariant, which means they can be used to extract unique features from the images. 
+
+	Here the outlines of MEI sequences of Shahar jump with a window size of $5$ is chosen to compute the Hu's moment. To get the Hu's moment for the outlines, the Hu's 7 moments for each frame is computed, then an average is taken across the frames to get the final averaged vector for the video. The results are put in the matrix $M$ as shown below, where the first row corresponds to the row vector from the jump action, the second row to the bend action and the third row to the skip action.
+
+	$$M = \begin{pmatrix}
+		0.5700  &  0.1795  &  0.0377  &  0.0745  &  0.0033  &  0.0294  &  0.0002\\
+		0.5357  &  0.0765  &  0.0695  &  0.0488  & -0.0506 &  -0.0118  &  0.2662\\
+		0.4817  &  0.1945  &  0.0548  &  0.0511  &  0.1049  &  0.0014  &  0.0226\\
+	 \end{pmatrix}$$
+
+	\rule{\textwidth}{0.4pt}
+
+\end{answer}
+
+\subsection{Do a simple comparison of the shape descriptors you found between the three actions (e.g. by
+finding the Mean Squared Error or any other difference measure between the Hu descriptors of the
+three MEIs etc). Show and discuss your results}
+\begin{answer}
+	\rule{\textwidth}{0.4pt}
+	\textbf{Answer:}
+	
+ To compare the differences between them, the pairwise euclidean distances are calculated, which is defined as $\sqrt{\sum_{i=1}^{7}(x_i - y_i)^2}$. The result of each pair is then put in another matrix $D$ as shown below, where $D_{ij}$ indicates the distance between the $i$th row and $j$th row of matrix $M$. 
+
+
+	$$D = \begin{pmatrix}
+		0   & 0.2980 &   0.1431\\
+    0.2980     &    0  &  0.3174\\
+    0.1431  &  0.3174     &    0\\
+	\end{pmatrix}$$
+
+	We can see that $D_{13}$ has the smallest value, i.e., the action of jump is most similar to that of skip among all three actions considered, which is intuitive from our daily experience. On the other hand, the most dissimilar action pair is ones between bend and skip. These results indicate that we can use the Hu's moment to detect different actions from each other.
+
+	\rule{\textwidth}{0.4pt}
+
+\end{answer}
+
+			
+\end{document}	
+
+

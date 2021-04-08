@@ -1,0 +1,224 @@
+\documentclass[conference]{styles/acmsiggraph}
+
+\usepackage{comment} % enables the use of multi-line comments (\ifx \fi)
+\usepackage{lipsum} %This package just generates Lorem Ipsum filler text.
+\usepackage{fullpage} % changes the margin
+\usepackage{enumitem} % for customizing enumerate tags
+\usepackage{amsmath,amsthm,amssymb}
+\usepackage{listings}
+\usepackage{graphicx}
+\usepackage{etoolbox}   % for booleans and much more
+\usepackage{verbatim}   % for the comment environment
+\usepackage[dvipsnames]{xcolor}
+\usepackage{fancyvrb}
+\usepackage{hyperref}
+\usepackage{menukeys}
+\usepackage{titlesec}
+\usepackage{float}
+\setlength{\parskip}{.8mm}
+
+\title{\huge Homework 3: \\ \LARGE {Introduction to Image and Video Processing}}
+\author{\Large Huang Yiping \\}
+\pdfauthor{Huang Yiping}
+
+
+\hypersetup{
+	colorlinks=true,
+	linkcolor=magenta,
+	filecolor=magenta,
+	urlcolor=blue,
+}
+% redefine \VerbatimInput
+\RecustomVerbatimCommand{\VerbatimInput}{VerbatimInput}%
+{fontsize=\footnotesize,
+ %
+ frame=lines,  % top and bottom rule only
+ framesep=2em, % separation between frame and text
+ rulecolor=\color{Gray},
+ %
+ label=\fbox{\color{Black}\textbf{OUTPUT}},
+ labelposition=topline,
+ %
+ commandchars=\|\(\), % escape character and argument delimiters for
+                      % commands within the verbatim
+ commentchar=*        % comment character
+}
+
+% convenient norm symbol
+\newcommand{\norm}[1]{\left\lVert#1\right\rVert}
+\renewcommand{\vec}[1]{\mathbf{#1}}
+
+\titlespacing*{\section}{0pt}{5.5ex plus 1ex minus .2ex}{2ex}
+\titlespacing*{\subsection}{0pt}{3ex}{2ex}
+
+\setcounter{secnumdepth}{4}	
+\renewcommand\theparagraph{\thesubsubsection.\arabic{paragraph}}	
+\newcommand\subsubsubsection{\paragraph}
+
+\setlength{\parskip}{0.5em}
+
+% a macro for hiding answers
+\newbool{hideanswers}
+\setbool{hideanswers}{false}
+\newenvironment{answer}{}{}
+\ifbool{hideanswers}{\AtBeginEnvironment{answer}{\comment} %
+\AtEndEnvironment{answer}{\endcomment}}{}
+
+\newcommand{\points}[1]{\hfill \normalfont{(\textit{#1pts})}}
+\newcommand{\pointsin}[1]{\normalfont{(\textit{#1pts})}}
+
+\begin{document}
+\maketitle
+
+
+\section{Compression}
+
+\subsection{Make your own Huffman code for your last name in Matlab or Python. Demonstrate the results
+and discuss them.}
+
+\begin{answer}
+	\rule{\textwidth}{0.4pt}
+	
+	\textbf{Answer:}
+
+	The string to be encoded is "Huang", and the encoded string for the name is: 110101110100. The mapping in between the input and output looks like below:
+	\begin{center}
+		\begin{tabular}{ c c c }
+		 g & 00\\
+		 n & 01\\
+		 u & 10\\
+		 H & 110\\
+		 a & 111\\
+		\end{tabular}
+		\end{center}
+	
+	The huffman coding is a "prefix-free" encoding, which basically means no code bit is a prefix of some other code bit. And this ensures that the decoding is possible. Also huffman coding will try to use the minimum bit length for the symbols that occur most often and will use more bits for the one which occur least often. In the case of the sample string, both occur with the same possibility, but due to the order the heap tree is compressed, they get different length depending on how they are folded into the compressed tree. The specific order implemented in the code is described below.
+
+	Many possible encodings can be produced by the huffman algorithm so long they have the same average length. The different ordering is due to two factors. First when implementing the heap, the placement of the vertex when their frequencies are tight can be decided arbitrarily. For this specific implementation, the ordering of the symbol in the unicode encoding is also taken into account, which means when two symbols have the same frequencies, the one ordered in the front in the unicode encoding is taken as the smaller one for all the operations involving comparison.
+
+	Secondly in the compression step, the algorithm just removes two smallest children from the heap, and combine their values to form a new child and add it to the heap until there is only one child left. Then when we go down the tree, we can use different binary digit to specify the path. One can designate digit to different branch at different level arbitrarily so long that the branch at the same level assigned to different digit, but in the scheme of the submitted code, the left branch is designated with 0 and the right branch with 1, thus produces the result as it is shown above (together with the specific order in the heap when frequencies are tight as explained above).
+
+	The entropy of the original string is also calculated, using the formular $\sum -p * log_2(p)$, and the result is 2.32. The average length of the path is calculated using the formular $\sum p_i* |C_i|$, where $|C_i|$ is the length of the ith symbol encoding. The result is 2.4. As we can see, the average length of th path is very close to the entropy, so the encoding is efficient in terms of compression.
+		
+\rule{\textwidth}{0.4pt}
+\end{answer}
+
+%%%%%%%%%%%%%%%
+% Question 2
+%%%%%%%%%%%%%%%
+\section{Morphological image processing}
+Choose an image of your liking, that would be interesting in its black and white version
+\subsection{Binarize it using a threshold that is based on the image statistics. Hint: e.g. by choosing a certain
+amount of standard deviations away from the intensity mean. This is just an option, you are
+encouraged to look up optimal thresholding methods.}
+\begin{answer}
+	\rule{\textwidth}{0.4pt}
+	
+	\textbf{Answer:}
+
+	The image chosen is shown below. This is a recent assignment I submitted for the course mathematical simulation. I used the camScanner, an app popular for quick scanning images with features including  auto-alignment and sharpening. Somehow this scanning result is not satisfactory, probably due to the sensor of the camera on my mobile phone. There are a lot of noises in the image which are not present in the paper I wrote. 
+
+	\begin{figure}[H]
+		\centering
+		\includegraphics[scale=0.5]{../homework_scanned}
+		\end{figure}	
+
+In order to extract the text from the image, the  first step is to binarize the image. One way to select the global cutoff point is through statistical method such as Otsu's method. The Otsu's method tries to maximize the between-class variance, which is defined as $P_1 (m_1 - m_G )^2 + P_2 (m_2 - m_G )^2$, where $P_1$ is the probability of class 1, $P_2$ the probability of class 2, which is $1-P_1$. The $m_1$ is the mean of class 1, $m_2$ is the mean of class 2, and $m_G$ is the mean of the global. The intuition is that the two classes should be as different as possible in terms of intensity. Using this method, the threshold is calculated to be 159. 
+The binarized result is shown below. However, we can see that there are still many noises after the binarization, particularly in the corners of the image. If we then apply the morphological methods, then the chances are that the script would also be removed together with the noise since they are both small in size compared to the background.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[scale=0.3]{images/binary_without_filtering}
+	\end{figure}	
+	
+	In order to minimize the noise, a gaussian filter with standard deviation of 1 is applied on the image first. Then we calculate the threshold again using the Otsu's method. This time the threshold is calculated to be 183. And the resulting binarized image is shown below. As we can see, this time the image has a much cleaner background than before. This is as expected, since the smoothing changes the shape of the histogram of the image, making it much easier to separate the foreground (in this case are the low pixels of the script) from the background (the bright pixel of the paper).
+	
+	\begin{figure}[H]
+		\centering
+		\includegraphics[scale=0.3]{images/binary_with_filtering}
+		\end{figure}	
+		
+		After this step, the close operation is applied to the binarized image. The result is shown below. We see that the few noises that are still left after the last step are removed from this step. This is as expected, since the close operation is a dilation operation followed by a erosion step. In this case, the noises in the background are like holes. And the first dilation step would fill in these holes, and the erosion step then will thicken the scripts again after they got thinned (again since the foreground and background are reverse in intensity). The net effect is a cleaner image than the one in the previous step. After these steps, the result is satisfactory except some remaining noises at the bottom of the paper. But these can be easily got rid of by some manuel filtering in the region.
+		
+		\begin{figure}[H]
+			\centering
+			\includegraphics[scale=0.3]{images/after_closing}
+			\end{figure}	
+
+		\rule{\textwidth}{0.4pt}
+		\end{answer}
+		%%%%%%%%%%%
+		% bonus
+		%%%%%%%%%%%
+\section{Alternative Bonus}
+\subsection{Make your own hit-and-miss transform example, implement it, and explain your
+results.}
+
+\begin{answer}
+	\rule{\textwidth}{0.4pt}
+	
+	\textbf{Answer:}
+
+	The image chosen is shown below. The image is a maze, and my goal is to identify the location where the joint sections are, i.e., where two roads cross each other. 
+	\begin{figure}[H]
+		\centering
+		\includegraphics[scale=0.3]{images/maze}
+		\end{figure}	
+
+	One way to think about finding these cross points is to identify separately the pattern for each cross point. This way of finding cross points links naturaly to the hit miss method. For example, if we want to identify the cross point where one left end of a horizontal road meets the upper end of a vertical road, i.e., those road intersections with a top left corner, then we could specify two matrix $B1$, $B2$ as follows:
+	$$B1 = \begin{pmatrix}
+		0 & 0 & 0\\
+		0 & 1 & 1\\
+		0 & 1 & 0\\
+	\end{pmatrix}$$
+	$$B2 = \begin{pmatrix}
+		1 & 1 & 1\\
+		1 & 0 & 0\\
+		1 & 0 & 0\\
+	\end{pmatrix}$$
+
+	Basically, the $B1$ matrix indicates the location we are interested, namely, where one end meets the other end. But this cannot be unconditioned, because we are interested currently only the top left corner, so we must also specify its background, which is why $B2$ matrix comes in. What $B2$ matrix says basically is that we need the pattern to be indeed have a background at its top and left side. The way hit miss find the location is through the formular $(A - B1) \cap (A^c -  B2)$, which is basically the intersection of two erosions. The first erosion finds the point of interest and second erosion of the compliment of the image with the $B2$ limits the point of interest. The result after these operations is shown below:
+	\begin{figure}[H]
+		\centering
+		\includegraphics[scale=0.5]{images/top_left1}
+		\end{figure}	
+
+	For a clear display, The locations have been shifted by $14$ pixels to the right and below, and have been resized and overlayed on top of the original image. We found that it found almost all the top left corner points except at few places. For example, the one at the bottom right corner is not found. Careful inspection of these locations found that the edges of these roads are not straight. This can be viewed as another application of the hit miss operation, which is to detect product quality. A slight modification of $B2$ matrix is made in the following form:
+	$$B2 = \begin{pmatrix}
+		1 & 1 & 1\\
+		1 & 0 & 0\\
+		0 & 0 & 0\\
+	\end{pmatrix} $$
+
+	The bottom left corner of the matrix is filled with $0$ instead of $1$, which means a straight background along vertical direction is not a requirement anymore. Applying the previous operations again, the new result is shown below:
+	\begin{figure}[H]
+		\centering
+		\includegraphics[scale=0.5]{images/top_left2}
+		\end{figure}
+	
+	And we see that all such points are found. Then we can perform this hit miss operation multiple times with different $B1$ and $B2$ matrices to find all patterns of the locations of joint of roads. However, another easier method is simply to find all locations of horizontal and vertical roads and then find the intersection of the two, which is the joint location of interest. Doing this, we can see that the hit miss is just an erosion operator since we are not interested in how the background looks like anymore, but only the foreground patterns, i.e., the horizontal and vertical directions. For this, two matrices are specified for the horizontal and vertical directions respectively. The size of both matrices are $40\times40$. For the horizontal matrix, only 20 of the middle rows are filled with $1$, and for the vertical matrix,  only 20 of the middle columns are filled with $1$. The found horizontal and vertical patterns and the final result of intersection overlayed on top of the original image are shown below.
+
+	\begin{figure}[H]
+		\centering
+		\includegraphics[scale=0.3]{images/horizontal}
+		\end{figure}	
+
+		\begin{figure}[H]
+			\centering
+			\includegraphics[scale=0.3]{images/vertical}
+			\end{figure}	
+	
+		\begin{figure}[H]
+			\centering
+			\includegraphics[scale=0.3]{images/joint_overlay}
+			\end{figure}	
+			
+			We can see that it finds all the joint locations in the maze, although there are some differences in sizes from different joint points, which are due to the way the two matrices are set, and the difference of width of roads inherent in the original image. The overall effect is satisfactory.
+
+		\rule{\textwidth}{0.4pt}
+		\end{answer}
+			
+			
+	\end{document}	
+
+
